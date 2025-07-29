@@ -1,0 +1,28 @@
+{
+  "google_trends": [
+    {
+      "keyword": "personalized jewelry",
+      "score": 0.85,
+      "trend_direction": "rising",
+      "collected_at": "2025-07-29T12:04:16.907785"
+    },
+    {
+      "keyword": "handmade candles",
+      "score": 0.72,
+      "trend_direction": "stable",
+      "collected_at": "2025-07-29T12:04:16.907785"
+    }
+  ],
+  "reddit": [
+    {
+      "title": "Beautiful handmade jewelry from Etsy!",
+      "score": 0.68,
+      "subreddit": "jewelry",
+      "collected_at": "2025-07-29T12:04:16.907785"
+    }
+  ],
+  "metadata": {
+    "total_items": 3,
+    "collection_time": "2025-07-29T12:04:16.907785"
+  }
+}

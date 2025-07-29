@@ -1,0 +1,64 @@
+# Core dependencies
+pandas==2.1.3
+numpy==1.25.2
+requests==2.31.0
+aiohttp==3.9.1
+asyncio==3.4.3
+
+# Configuration and utilities
+PyYAML==6.0.1
+python-dotenv==1.0.0
+click==8.1.7
+
+# Data collection
+pytrends==4.9.2
+praw==7.7.1
+beautifulsoup4==4.12.2
+selenium==4.15.2
+playwright==1.40.0
+webdriver-manager==4.0.1
+scrapy==2.11.0
+
+# Web scraping
+lxml==4.9.3
+html5lib==1.1
+cssselect==1.2.0
+
+# Data processing
+scikit-learn==1.3.2
+nltk==3.8.1
+textblob==0.17.1
+
+# Visualization
+matplotlib==3.8.2
+seaborn==0.13.0
+plotly==5.17.0
+streamlit==1.28.1
+
+# Database
+sqlalchemy==2.0.23
+
+# API and web
+fastapi==0.104.1
+uvicorn==0.24.0
+
+# AI/ML
+openai==1.3.5
+langchain==0.0.340
+langchain-community==0.0.1
+
+# Reporting
+jinja2==3.1.2
+weasyprint==60.2
+reportlab==4.0.7
+
+# Utilities
+python-dateutil==2.8.2
+pytz==2023.3
+tqdm==4.66.1
+psutil==5.9.6
+
+# Development
+pytest==7.4.3
+black==23.11.0
+flake8==6.1.0 

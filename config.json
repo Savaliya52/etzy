@@ -1,0 +1,150 @@
+{
+  "data_sources": {
+    "google_trends": {
+      "enabled": true,
+      "max_results": 100,
+      "timeframe": "today 3-m",
+      "geo": "US"
+    },
+    "reddit": {
+      "enabled": true,
+      "subreddits": [
+        "Etsy",
+        "EtsySellers",
+        "gifts",
+        "jewelry",
+        "homeimprovement",
+        "weddingplanning",
+        "crafts"
+      ],
+      "max_posts": 50,
+      "time_filter": "week"
+    },
+    "pinterest": {
+      "enabled": true,
+      "max_pins": 100,
+      "search_terms": [
+        "etsy jewelry",
+        "etsy home decor",
+        "etsy gifts",
+        "handmade",
+        "personalized gifts",
+        "vintage"
+      ]
+    },
+    "twitter": {
+      "enabled": false,
+      "max_tweets": 100,
+      "search_terms": [
+        "etsy",
+        "handmade",
+        "personalized gifts"
+      ]
+    },
+    "amazon": {
+      "enabled": true,
+      "categories": [
+        "Home & Kitchen",
+        "Jewelry",
+        "Arts & Crafts",
+        "Beauty & Personal Care",
+        "Toys & Games"
+      ],
+      "max_products": 50
+    },
+    "etsy": {
+      "enabled": true,
+      "max_suggestions": 100,
+      "categories": [
+        "jewelry",
+        "home-decor",
+        "clothing",
+        "art",
+        "crafts",
+        "wedding",
+        "vintage",
+        "toys"
+      ]
+    }
+  },
+  "analysis": {
+    "categories": {
+      "home_decor": [
+        "home decor",
+        "wall art",
+        "candle",
+        "mug",
+        "pillow"
+      ],
+      "jewelry": [
+        "necklace",
+        "ring",
+        "bracelet",
+        "earrings",
+        "jewelry"
+      ],
+      "gifts": [
+        "gift",
+        "personalized",
+        "custom",
+        "unique"
+      ],
+      "pets": [
+        "pet",
+        "dog",
+        "cat",
+        "animal"
+      ],
+      "wellness": [
+        "soap",
+        "candle",
+        "beauty",
+        "skincare"
+      ],
+      "digital": [
+        "digital",
+        "printable",
+        "download"
+      ],
+      "vintage": [
+        "vintage",
+        "retro",
+        "antique"
+      ],
+      "crafts": [
+        "craft",
+        "diy",
+        "handmade"
+      ]
+    },
+    "scoring": {
+      "frequency_weight": 0.3,
+      "recency_weight": 0.3,
+      "growth_weight": 0.2,
+      "cross_platform_weight": 0.2
+    },
+    "min_score": 0.1,
+    "max_trends": 20
+  },
+  "reporting": {
+    "daily": {
+      "enabled": true,
+      "top_trends": 5,
+      "email_enabled": false
+    },
+    "weekly": {
+      "enabled": true,
+      "top_trends": 10,
+      "email_enabled": false,
+      "include_charts": true
+    }
+  },
+  "database": {
+    "type": "sqlite",
+    "path": "data/trends.db"
+  },
+  "logging": {
+    "level": "INFO",
+    "file": "logs/trend_detector.log"
+  }
+}

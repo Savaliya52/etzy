@@ -1,0 +1,123 @@
+{
+  "report_date": "2025-07-29T12:02:47.227841",
+  "summary": {
+    "total_trends_analyzed": 23,
+    "high_potential_opportunities": 0,
+    "data_sources": [
+      "google_trends",
+      "reddit",
+      "pinterest"
+    ],
+    "total_items_collected": 6
+  },
+  "top_trends": [
+    [
+      "etsy",
+      6
+    ],
+    [
+      "necklace",
+      3
+    ],
+    [
+      "personalized",
+      2
+    ],
+    [
+      "from",
+      2
+    ],
+    [
+      "found",
+      2
+    ],
+    [
+      "beautiful",
+      2
+    ],
+    [
+      "name",
+      2
+    ],
+    [
+      "home",
+      2
+    ],
+    [
+      "decor",
+      2
+    ],
+    [
+      "handmade",
+      2
+    ]
+  ],
+  "opportunities": [
+    {
+      "keyword": "etsy",
+      "score": 0.6,
+      "frequency": 6,
+      "market_potential": "Medium",
+      "competition_level": "High",
+      "suggested_tags": [
+        "etsy",
+        "handmade",
+        "personalized",
+        "etsy"
+      ]
+    },
+    {
+      "keyword": "necklace",
+      "score": 0.3,
+      "frequency": 3,
+      "market_potential": "Low",
+      "competition_level": "Medium",
+      "suggested_tags": [
+        "necklace",
+        "handmade",
+        "personalized",
+        "etsy"
+      ]
+    },
+    {
+      "keyword": "personalized",
+      "score": 0.2,
+      "frequency": 2,
+      "market_potential": "Low",
+      "competition_level": "Low",
+      "suggested_tags": [
+        "personalized",
+        "handmade",
+        "personalized",
+        "etsy"
+      ]
+    },
+    {
+      "keyword": "from",
+      "score": 0.2,
+      "frequency": 2,
+      "market_potential": "Low",
+      "competition_level": "Low",
+      "suggested_tags": [
+        "from",
+        "handmade",
+        "personalized",
+        "etsy"
+      ]
+    },
+    {
+      "keyword": "found",
+      "score": 0.2,
+      "frequency": 2,
+      "market_potential": "Low",
+      "competition_level": "Low",
+      "suggested_tags": [
+        "found",
+        "handmade",
+        "personalized",
+        "etsy"
+      ]
+    }
+  ],
+  "categorized_trends": {}
+}
