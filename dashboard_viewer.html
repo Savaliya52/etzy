@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Etsy Trend Detection System - Dashboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            font-weight: 300;
+        }
+        
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+        
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+            gap: 30px;
+            padding: 30px;
+        }
+        
+        .chart-container {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+            transition: transform 0.3s ease;
+        }
+        
+        .chart-container:hover {
+            transform: translateY(-5px);
+        }
+        
+        .chart-title {
+            font-size: 1.3em;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+        
+        .chart-image {
+            width: 100%;
+            height: auto;
+            border-radius: 8px;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+        }
+        
+        .summary-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            padding: 30px;
+            background: #f8f9fa;
+        }
+        
+        .stat-card {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+        }
+        
+        .stat-number {
+            font-size: 2em;
+            font-weight: bold;
+            color: #667eea;
+            margin-bottom: 5px;
+        }
+        
+        .stat-label {
+            color: #666;
+            font-size: 0.9em;
+        }
+        
+        .comprehensive-dashboard {
+            grid-column: 1 / -1;
+            text-align: center;
+        }
+        
+        .comprehensive-dashboard .chart-image {
+            max-width: 100%;
+            height: auto;
+        }
+        
+        @media (max-width: 768px) {
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+                padding: 15px;
+            }
+            
+            .header h1 {
+                font-size: 2em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎯 Etsy Trend Detection System</h1>
+            <p>Comprehensive Data Visualization Dashboard</p>
+        </div>
+        
+        <div class="summary-stats">
+            <div class="stat-card">
+                <div class="stat-number">6</div>
+                <div class="stat-label">Data Sources</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">23</div>
+                <div class="stat-label">Trends Analyzed</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">5</div>
+                <div class="stat-label">Business Opportunities</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">4</div>
+                <div class="stat-label">Categories</div>
+            </div>
+        </div>
+        
+        <div class="dashboard-grid">
+            <div class="chart-container">
+                <div class="chart-title">📈 Trends Over Time</div>
+                <img src="trends_over_time.png" alt="Trends Over Time" class="chart-image">
+            </div>
+            
+            <div class="chart-container">
+                <div class="chart-title">📂 Category Breakdown</div>
+                <img src="category_breakdown.png" alt="Category Breakdown" class="chart-image">
+            </div>
+            
+            <div class="chart-container">
+                <div class="chart-title">📊 Data Source Analysis</div>
+                <img src="source_analysis.png" alt="Source Analysis" class="chart-image">
+            </div>
+            
+            <div class="chart-container">
+                <div class="chart-title">💡 Business Opportunity Radar</div>
+                <img src="opportunity_radar.png" alt="Opportunity Radar" class="chart-image">
+            </div>
+            
+            <div class="chart-container">
+                <div class="chart-title">🔥 Keyword Frequency Heatmap</div>
+                <img src="keyword_heatmap.png" alt="Keyword Heatmap" class="chart-image">
+            </div>
+            
+            <div class="chart-container comprehensive-dashboard">
+                <div class="chart-title">🎯 Comprehensive Dashboard</div>
+                <img src="comprehensive_dashboard.png" alt="Comprehensive Dashboard" class="chart-image">
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        // Add some interactivity
+        document.addEventListener('DOMContentLoaded', function() {
+            const chartContainers = document.querySelectorAll('.chart-container');
+            
+            chartContainers.forEach(container => {
+                container.addEventListener('click', function() {
+                    const img = this.querySelector('.chart-image');
+                    if (img) {
+                        // Open image in new tab for full view
+                        window.open(img.src, '_blank');
+                    }
+                });
+                
+                // Add cursor pointer to indicate clickable
+                container.style.cursor = 'pointer';
+            });
+        });
+    </script>
+</body>
+</html> 

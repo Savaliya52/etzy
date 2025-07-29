@@ -1,247 +1,375 @@
 #!/usr/bin/env python3
 """
-Etsy Trend Detection Agent - Main Entry Point
+Etsy Trend Detection System - Main Application
 
-Automated trend detection system for Etsy sellers to identify trending product niches.
+Comprehensive trend detection system that identifies emerging trends
+across multiple platforms and provides business intelligence for Etsy sellers.
 """
 
+import argparse
 import asyncio
-import click
 import logging
 from datetime import datetime, timedelta
 from pathlib import Path
-import sys
-import os
+from typing import Dict, List, Any, Optional
+import json
 
-# Add project root to path
-sys.path.append(str(Path(__file__).parent))
-
-from data_ingestion.collector_manager import DataCollectorManager
+# Import system modules
+from data_ingestion.collector_manager import CollectorManager
+from analysis.emerging_trend_detector import EmergingTrendDetector
 from analysis.trend_analyzer import TrendAnalyzer
+from analysis.scoring_engine import ScoringEngine
+from storage.history_manager import HistoryManager
 from reporting.report_generator import ReportGenerator
 from utils.config import Config
-from utils.database import Database
 from utils.helpers import setup_logging, create_directories
 
-# Setup logging
-setup_logging()
-logger = logging.getLogger(__name__)
-
-@click.group()
-@click.option('--config', default='config.yaml', help='Configuration file path')
-@click.pass_context
-def cli(ctx, config):
-    """Etsy Trend Detection Agent - Identify trending product niches for your Etsy store."""
-    ctx.ensure_object(dict)
-    ctx.obj['config'] = Config(config)
+class TrendDetectionSystem:
+    """Main system class that orchestrates all components."""
     
-    # Create necessary directories
-    create_directories()
-
-@cli.command()
-@click.option('--mode', type=click.Choice(['daily', 'weekly']), default='daily', 
-              help='Collection mode')
-@click.option('--sources', default='all', 
-              help='Comma-separated list of data sources (all, google, reddit, pinterest, etc.)')
-@click.pass_context
-def collect(ctx, mode, sources):
-    """Collect trend data from various sources."""
-    config = ctx.obj['config']
-    
-    logger.info(f"Starting data collection in {mode} mode")
-    
-    # Parse sources
-    if sources == 'all':
-        sources_to_collect = ['google_trends', 'reddit', 'pinterest', 'twitter', 'amazon', 'etsy']
-    else:
-        sources_to_collect = [s.strip() for s in sources.split(',')]
-    
-    async def run_collection():
-        collector = DataCollectorManager(config)
-        await collector.collect_all_data(sources_to_collect, mode)
-    
-    asyncio.run(run_collection())
-    logger.info("Data collection completed")
-
-@cli.command()
-@click.option('--mode', type=click.Choice(['daily', 'weekly']), default='daily',
-              help='Analysis mode')
-@click.option('--output', default='data/processed/',
-              help='Output directory for analysis results')
-@click.pass_context
-def analyze(ctx, mode, output):
-    """Analyze collected data and identify trending opportunities."""
-    config = ctx.obj['config']
-    
-    logger.info(f"Starting trend analysis in {mode} mode")
-    
-    async def run_analysis():
-        analyzer = TrendAnalyzer(config)
-        results = await analyzer.analyze_trends(mode)
+    def __init__(self, config_path: str = "config.json"):
+        """
+        Initialize the trend detection system.
         
-        # Save results
-        output_path = Path(output)
-        output_path.mkdir(parents=True, exist_ok=True)
+        Args:
+            config_path: Path to configuration file
+        """
+        self.config = Config(config_path)
+        self.history_manager = HistoryManager()
+        self.emerging_detector = EmergingTrendDetector()
+        self.trend_analyzer = TrendAnalyzer()
+        self.scoring_engine = ScoringEngine()
+        self.report_generator = ReportGenerator()
+        self.collector_manager = CollectorManager(self.config)
         
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        results_file = output_path / f"trend_analysis_{mode}_{timestamp}.json"
+        # Setup logging
+        setup_logging()
+        self.logger = logging.getLogger(__name__)
         
-        import json
-        with open(results_file, 'w') as f:
-            json.dump(results, f, indent=2, default=str)
+        # Create necessary directories
+        create_directories()
         
-        logger.info(f"Analysis results saved to {results_file}")
-    
-    asyncio.run(run_analysis())
-
-@cli.command()
-@click.option('--mode', type=click.Choice(['daily', 'weekly']), default='daily',
-              help='Report mode')
-@click.option('--format', type=click.Choice(['html', 'pdf', 'email']), default='html',
-              help='Report format')
-@click.option('--output', default='data/reports/',
-              help='Output directory for reports')
-@click.pass_context
-def report(ctx, mode, format, output):
-    """Generate trend reports."""
-    config = ctx.obj['config']
-    
-    logger.info(f"Generating {mode} report in {format} format")
-    
-    async def run_report():
-        generator = ReportGenerator(config)
-        report_path = await generator.generate_report(mode, format, output)
+    async def collect_data(self, sources: Optional[List[str]] = None) -> List[Dict[str, Any]]:
+        """
+        Collect data from all configured sources.
         
-        if report_path:
-            logger.info(f"Report generated: {report_path}")
-        else:
-            logger.error("Failed to generate report")
-    
-    asyncio.run(run_report())
-
-@cli.command()
-@click.option('--port', default=8501, help='Dashboard port')
-@click.pass_context
-def dashboard(ctx, port):
-    """Start the Streamlit dashboard."""
-    import subprocess
-    import sys
-    
-    dashboard_path = Path(__file__).parent / "dashboard" / "app.py"
-    
-    if not dashboard_path.exists():
-        logger.error("Dashboard not found. Please ensure dashboard/app.py exists.")
-        return
-    
-    logger.info(f"Starting dashboard on port {port}")
-    
-    try:
-        subprocess.run([
-            sys.executable, "-m", "streamlit", "run", 
-            str(dashboard_path), "--server.port", str(port)
-        ])
-    except KeyboardInterrupt:
-        logger.info("Dashboard stopped")
-
-@cli.command()
-@click.option('--mode', type=click.Choice(['daily', 'weekly']), default='daily',
-              help='Full pipeline mode')
-@click.option('--sources', default='all', 
-              help='Comma-separated list of data sources')
-@click.option('--report-format', type=click.Choice(['html', 'pdf', 'email']), default='html',
-              help='Report format')
-@click.pass_context
-def run(ctx, mode, sources, report_format):
-    """Run the complete pipeline: collect -> analyze -> report."""
-    config = ctx.obj['config']
-    
-    logger.info(f"Running complete pipeline in {mode} mode")
-    
-    async def run_pipeline():
+        Args:
+            sources: List of specific sources to collect from (None for all)
+            
+        Returns:
+            List of collected trend data
+        """
+        self.logger.info("Starting data collection...")
+        
+        try:
+            # Collect data from all sources
+            collected_data = await self.collector_manager.collect_all_data(sources)
+            
+            # Store in history
+            today = datetime.now().strftime('%Y-%m-%d')
+            self.history_manager.store_daily_trends(collected_data, today)
+            
+            self.logger.info(f"Collected {len(collected_data)} data points from {len(collected_data)} sources")
+            return collected_data
+            
+        except Exception as e:
+            self.logger.error(f"Error during data collection: {e}")
+            return []
+            
+    def analyze_trends(self, trends_data: List[Dict[str, Any]]) -> Dict[str, Any]:
+        """
+        Analyze trends and detect emerging patterns.
+        
+        Args:
+            trends_data: Raw trends data
+            
+        Returns:
+            Dictionary containing analysis results
+        """
+        self.logger.info("Starting trend analysis...")
+        
+        try:
+            # Get historical data for comparison
+            end_date = datetime.now().strftime('%Y-%m-%d')
+            start_date = (datetime.now() - timedelta(days=7)).strftime('%Y-%m-%d')
+            historical_data = self.history_manager.get_trends_by_date_range(start_date, end_date)
+            
+            # Detect emerging trends
+            emerging_trends = self.emerging_detector.detect_emerging_trends(
+                trends_data, historical_data
+            )
+            
+            # Calculate multi-source confidence
+            trends_with_confidence = self.emerging_detector.calculate_multi_source_confidence(
+                trends_data
+            )
+            
+            # Detect cross-platform trends
+            cross_platform_trends = self.emerging_detector.detect_cross_platform_trends(
+                trends_with_confidence
+            )
+            
+            # Filter high-quality trends
+            high_quality_trends = self.emerging_detector.filter_high_quality_trends(
+                emerging_trends
+            )
+            
+            # Generate business suggestions
+            product_suggestions = self.emerging_detector.suggest_etsy_products(
+                high_quality_trends
+            )
+            
+            analysis_results = {
+                'total_trends': len(trends_data),
+                'emerging_trends': emerging_trends,
+                'cross_platform_trends': cross_platform_trends,
+                'high_quality_trends': high_quality_trends,
+                'product_suggestions': product_suggestions,
+                'analysis_date': datetime.now().isoformat()
+            }
+            
+            self.logger.info(f"Analysis complete: {len(emerging_trends)} emerging trends detected")
+            return analysis_results
+            
+        except Exception as e:
+            self.logger.error(f"Error during trend analysis: {e}")
+            return {}
+            
+    def generate_reports(self, analysis_results: Dict[str, Any]) -> Dict[str, str]:
+        """
+        Generate comprehensive reports.
+        
+        Args:
+            analysis_results: Results from trend analysis
+            
+        Returns:
+            Dictionary with paths to generated reports
+        """
+        self.logger.info("Generating reports...")
+        
+        try:
+            # Generate daily report
+            daily_reports = self.report_generator.generate_daily_report(
+                analysis_results.get('total_trends', []),
+                analysis_results.get('emerging_trends', []),
+                analysis_results.get('cross_platform_trends', [])
+            )
+            
+            # Generate weekly report if enough data
+            weekly_reports = {}
+            end_date = datetime.now().strftime('%Y-%m-%d')
+            start_date = (datetime.now() - timedelta(days=7)).strftime('%Y-%m-%d')
+            weekly_data = self.history_manager.get_trends_by_date_range(start_date, end_date)
+            
+            if weekly_data:
+                weekly_reports = self.report_generator.generate_weekly_report(
+                    weekly_data, (start_date, end_date)
+                )
+                
+            all_reports = {**daily_reports, **weekly_reports}
+            
+            self.logger.info(f"Generated {len(all_reports)} reports")
+            return all_reports
+            
+        except Exception as e:
+            self.logger.error(f"Error generating reports: {e}")
+            return {}
+            
+    def cleanup_old_data(self):
+        """Clean up old data based on retention policy."""
+        self.logger.info("Cleaning up old data...")
+        self.history_manager.cleanup_old_data()
+        
+    def get_system_stats(self) -> Dict[str, Any]:
+        """Get system statistics."""
+        db_stats = self.history_manager.get_database_stats()
+        
+        # Get recent trends
+        end_date = datetime.now().strftime('%Y-%m-%d')
+        start_date = (datetime.now() - timedelta(days=7)).strftime('%Y-%m-%d')
+        recent_trends = self.history_manager.get_trends_by_date_range(start_date, end_date)
+        
+        # Get emerging trends
+        emerging_trends = self.history_manager.get_emerging_trends()
+        
+        # Get multi-source trends
+        multi_source_trends = self.history_manager.get_multi_source_trends()
+        
+        stats = {
+            'database': db_stats,
+            'recent_trends': len(recent_trends),
+            'emerging_trends': len(emerging_trends),
+            'multi_source_trends': len(multi_source_trends),
+            'last_updated': datetime.now().isoformat()
+        }
+        
+        return stats
+        
+    async def run_full_cycle(self) -> Dict[str, Any]:
+        """
+        Run a complete data collection and analysis cycle.
+        
+        Returns:
+            Dictionary with cycle results
+        """
+        self.logger.info("Starting full trend detection cycle...")
+        
         # Step 1: Collect data
-        logger.info("Step 1: Collecting data...")
-        collector = DataCollectorManager(config)
+        collected_data = await self.collect_data()
         
-        if sources == 'all':
-            sources_to_collect = ['google_trends', 'reddit', 'pinterest', 'twitter', 'amazon', 'etsy']
-        else:
-            sources_to_collect = [s.strip() for s in sources.split(',')]
-        
-        await collector.collect_all_data(sources_to_collect, mode)
-        
+        if not collected_data:
+            self.logger.warning("No data collected, skipping analysis")
+            return {}
+            
         # Step 2: Analyze trends
-        logger.info("Step 2: Analyzing trends...")
-        analyzer = TrendAnalyzer(config)
-        analysis_results = await analyzer.analyze_trends(mode)
+        analysis_results = self.analyze_trends(collected_data)
         
-        # Step 3: Generate report
-        logger.info("Step 3: Generating report...")
-        generator = ReportGenerator(config)
-        report_path = await generator.generate_report(mode, report_format)
+        if not analysis_results:
+            self.logger.warning("No analysis results generated")
+            return {}
+            
+        # Step 3: Generate reports
+        reports = self.generate_reports(analysis_results)
         
-        if report_path:
-            logger.info(f"Pipeline completed successfully! Report: {report_path}")
-        else:
-            logger.error("Pipeline completed with errors")
-    
-    asyncio.run(run_pipeline())
+        # Step 4: Cleanup old data
+        self.cleanup_old_data()
+        
+        # Step 5: Get system stats
+        stats = self.get_system_stats()
+        
+        cycle_results = {
+            'collected_data_count': len(collected_data),
+            'emerging_trends_count': len(analysis_results.get('emerging_trends', [])),
+            'reports_generated': len(reports),
+            'system_stats': stats,
+            'cycle_completed_at': datetime.now().isoformat()
+        }
+        
+        self.logger.info(f"Full cycle completed: {cycle_results}")
+        return cycle_results
+        
+    async def run_demo(self):
+        """Run a demo with sample data."""
+        self.logger.info("Running demo mode...")
+        
+        # Create sample data
+        sample_data = [
+            {
+                'keyword': 'personalized jewelry',
+                'platform': 'google_trends',
+                'category': 'jewelry',
+                'popularity_score': 85,
+                'timestamp': datetime.now().isoformat()
+            },
+            {
+                'keyword': 'handmade candles',
+                'platform': 'pinterest',
+                'category': 'home_decor',
+                'popularity_score': 72,
+                'timestamp': datetime.now().isoformat()
+            },
+            {
+                'keyword': 'custom wall art',
+                'platform': 'reddit',
+                'category': 'home_decor',
+                'popularity_score': 68,
+                'timestamp': datetime.now().isoformat()
+            }
+        ]
+        
+        # Analyze sample data
+        analysis_results = self.analyze_trends(sample_data)
+        
+        # Generate reports
+        reports = self.generate_reports(analysis_results)
+        
+        self.logger.info(f"Demo completed: {len(analysis_results.get('emerging_trends', []))} emerging trends detected")
+        return analysis_results, reports
 
-@cli.command()
-@click.pass_context
-def status(ctx):
-    """Show system status and recent data."""
-    config = ctx.obj['config']
+def main():
+    """Main entry point for the application."""
+    parser = argparse.ArgumentParser(description="Etsy Trend Detection System")
+    parser.add_argument("command", choices=[
+        "collect", "analyze", "report", "demo", "stats", "full-cycle", "dashboard"
+    ], help="Command to execute")
     
-    logger.info("Checking system status...")
+    parser.add_argument("--sources", nargs="+", help="Specific data sources to use")
+    parser.add_argument("--config", default="config.json", help="Configuration file path")
+    parser.add_argument("--output", help="Output directory for reports")
+    parser.add_argument("--demo", action="store_true", help="Run in demo mode")
     
-    # Check data directories
-    data_dirs = ['data/raw', 'data/processed', 'data/reports']
-    for dir_path in data_dirs:
-        path = Path(dir_path)
-        if path.exists():
-            files = list(path.glob('*'))
-            logger.info(f"{dir_path}: {len(files)} files")
-        else:
-            logger.warning(f"{dir_path}: Directory not found")
+    args = parser.parse_args()
     
-    # Check database
+    # Initialize system
+    system = TrendDetectionSystem(args.config)
+    
     try:
-        db = Database(config)
-        recent_data = db.get_recent_data()
-        logger.info(f"Database: {len(recent_data)} recent records")
+        if args.command == "collect":
+            # Collect data only
+            asyncio.run(system.collect_data(args.sources))
+            print("✅ Data collection completed")
+            
+        elif args.command == "analyze":
+            # Analyze existing data
+            end_date = datetime.now().strftime('%Y-%m-%d')
+            trends_data = system.history_manager.get_trends_by_date(end_date)
+            if trends_data:
+                results = system.analyze_trends(trends_data)
+                print(f"✅ Analysis completed: {len(results.get('emerging_trends', []))} emerging trends")
+            else:
+                print("⚠️ No data found for today. Run 'collect' first.")
+                
+        elif args.command == "report":
+            # Generate reports from existing data
+            end_date = datetime.now().strftime('%Y-%m-%d')
+            trends_data = system.history_manager.get_trends_by_date(end_date)
+            if trends_data:
+                analysis_results = system.analyze_trends(trends_data)
+                reports = system.generate_reports(analysis_results)
+                print(f"✅ Reports generated: {list(reports.keys())}")
+            else:
+                print("⚠️ No data found for today. Run 'collect' first.")
+                
+        elif args.command == "demo":
+            # Run demo
+            analysis_results, reports = asyncio.run(system.run_demo())
+            print(f"✅ Demo completed: {len(analysis_results.get('emerging_trends', []))} emerging trends")
+            
+        elif args.command == "stats":
+            # Show system statistics
+            stats = system.get_system_stats()
+            print("📊 System Statistics:")
+            print(f"  Total trends in database: {stats['database']['total_trends']}")
+            print(f"  Recent trends (7 days): {stats['recent_trends']}")
+            print(f"  Emerging trends: {stats['emerging_trends']}")
+            print(f"  Multi-source trends: {stats['multi_source_trends']}")
+            print(f"  Database size: {stats['database']['database_size']} bytes")
+            
+        elif args.command == "full-cycle":
+            # Run complete cycle
+            results = asyncio.run(system.run_full_cycle())
+            print(f"✅ Full cycle completed:")
+            print(f"  Collected: {results['collected_data_count']} data points")
+            print(f"  Emerging trends: {results['emerging_trends_count']}")
+            print(f"  Reports generated: {results['reports_generated']}")
+            
+        elif args.command == "dashboard":
+            # Launch Streamlit dashboard
+            import subprocess
+            import sys
+            
+            dashboard_path = Path("dashboard/streamlit_app.py")
+            if dashboard_path.exists():
+                print("🚀 Launching Streamlit dashboard...")
+                subprocess.run([sys.executable, "-m", "streamlit", "run", str(dashboard_path)])
+            else:
+                print("❌ Dashboard file not found")
+                
+    except KeyboardInterrupt:
+        print("\n⚠️ Operation cancelled by user")
     except Exception as e:
-        logger.error(f"Database error: {e}")
-    
-    # Check configuration
-    logger.info(f"Configuration loaded: {config.config_file}")
-    logger.info(f"Data sources enabled: {config.get('data_sources', [])}")
+        print(f"❌ Error: {e}")
+        system.logger.error(f"Application error: {e}")
 
-@cli.command()
-@click.option('--days', default=7, help='Number of days to clean')
-@click.pass_context
-def cleanup(ctx, days):
-    """Clean up old data files."""
-    config = ctx.obj['config']
-    
-    logger.info(f"Cleaning up data older than {days} days...")
-    
-    cutoff_date = datetime.now() - timedelta(days=days)
-    
-    data_dirs = ['data/raw', 'data/processed', 'data/reports']
-    cleaned_files = 0
-    
-    for dir_path in data_dirs:
-        path = Path(dir_path)
-        if path.exists():
-            for file_path in path.glob('*'):
-                if file_path.is_file():
-                    file_time = datetime.fromtimestamp(file_path.stat().st_mtime)
-                    if file_time < cutoff_date:
-                        file_path.unlink()
-                        cleaned_files += 1
-                        logger.info(f"Deleted: {file_path}")
-    
-    logger.info(f"Cleanup completed. Deleted {cleaned_files} files.")
-
-if __name__ == '__main__':
-    cli() 
+if __name__ == "__main__":
+    main() 
